@@ -154,12 +154,12 @@ function rendu(){
     <div class="card ${d.erreur?"err":""}" style="animation-delay:${Math.min(i,10)*30}ms">
       <div class="img">
         ${d.image ? `<img src="${esc(d.image)}" loading="lazy" alt="">` : `<span style="font-size:54px">${ICONES[d.categorie]||"🛍️"}</span>`}
-        <div class="badge">-${Math.round(d.baisse)}%</div>
+        ${d.baisse >= 1 ? `<div class="badge">-${Math.round(d.baisse)}%</div>` : ""}
         ${d.erreur ? `<div class="tag">ERREUR DE PRIX ?</div>` : ""}
       </div>
       <div class="body">
         <div class="t">${esc(d.titre)}</div>
-        <div class="old">${euros(d.ref)}</div>
+        ${d.ref > d.prix ? `<div class="old">${euros(d.ref)}</div>` : `<div class="old" style="text-decoration:none">Bon plan</div>`}
         <div class="new">${euros(d.prix)}</div>
         <div class="meta">${ilya(d.date)} · ${esc(d.categorie)}</div>
         <button class="btn" data-u="${esc(d.lien)}">Voir l'offre</button>
