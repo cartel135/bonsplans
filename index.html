@@ -62,6 +62,38 @@
   .sk{background:linear-gradient(90deg,var(--card) 0%,#232c46 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:18px;aspect-ratio:.62}
   @keyframes sh{to{background-position:-200% 0}}
   footer{padding:24px 20px 0;text-align:center;font-size:11.5px;color:var(--mut);line-height:1.5}
+
+  /* ---------- Admin ---------- */
+  #admin{display:none;padding:6px 16px 30px}
+  body.mode-admin #admin{display:block}
+  body.mode-admin .search, body.mode-admin .chips, body.mode-admin .bar, body.mode-admin .grid, body.mode-admin footer, body.mode-admin #demo{display:none}
+  .tabs{display:flex;gap:8px;margin:10px 0 14px}
+  .tab{flex:1;text-align:center;padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-weight:700;font-size:14px;cursor:pointer}
+  .tab.on{background:var(--tg);border-color:var(--tg);color:#fff}
+  .box{background:var(--card);border-radius:16px;padding:6px 14px;margin-bottom:12px}
+  .box h3{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 4px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .lb{font-size:14.5px;font-weight:600}
+  .row .ds{font-size:12px;color:var(--mut);margin-top:2px}
+  .sw{position:relative;width:46px;height:28px;flex:none}
+  .sw input{opacity:0;width:0;height:0}
+  .sw span{position:absolute;inset:0;background:#3a4560;border-radius:28px;transition:.2s}
+  .sw span:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+  .sw input:checked+span{background:var(--grn)}
+  .sw input:checked+span:before{transform:translateX(18px)}
+  .num{width:84px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:15px;text-align:right}
+  .txt{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:14px}
+  .rech{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .rech b{flex:1;font-size:14.5px}
+  .rech small{color:var(--mut)}
+  .rech button,.add button{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+  .rech button{background:#3a2030;color:#ff8a93}
+  .add{display:flex;gap:8px;padding:12px 0}
+  .add input{flex:1}
+  .add button{background:var(--tg);color:#fff}
+  .save{position:sticky;bottom:12px;width:100%;margin-top:6px;border:0;border-radius:14px;padding:15px;background:var(--grn);color:#062;font-weight:900;font-size:16px;cursor:pointer}
+  .hint{font-size:12px;color:var(--mut);padding:6px 2px 10px;line-height:1.45}
 </style>
 </head>
 <body>
@@ -87,6 +119,35 @@
     <option value="eco">Plus grosse économie</option>
     <option value="prix">Prix croissant</option>
   </select>
+</div>
+<div id="admin">
+  <div class="tabs"><div class="tab on" data-t="base">⚙️ Réglages de base</div><div class="tab" data-t="perso">🎯 Personnaliser</div></div>
+  <div id="t-base">
+    <div class="box"><h3>Alertes</h3>
+      <div class="row"><div><div class="lb">🚨 Erreurs de prix</div><div class="ds">Les erreurs de prix Amazon repérées</div></div><label class="sw"><input type="checkbox" id="a-erreurs"><span></span></label></div>
+      <div class="row"><div><div class="lb">🔥 Bons plans Amazon</div><div class="ds">Les nouveaux bons plans Amazon</div></div><label class="sw"><input type="checkbox" id="a-bons"><span></span></label></div>
+      <div class="row"><div><div class="lb">Popularité minimum</div><div class="ds">En degrés Dealabs (0 = tout)</div></div><input class="num" id="a-temp" type="number" min="0" step="10"></div>
+      <div class="row"><div><div class="lb">Prix maximum</div><div class="ds">En € (0 = pas de limite)</div></div><input class="num" id="a-prixmax" type="number" min="0" step="10"></div>
+      <div class="row"><div><div class="lb">Scan toutes les</div><div class="ds">Minutes (3 minimum)</div></div><input class="num" id="a-intervalle" type="number" min="3" max="60"></div>
+    </div>
+    <div class="box"><h3>Canal</h3>
+      <div class="row"><div><div class="lb">🤖 Publication automatique</div><div class="ds">Publie seul les pépites Amazon dans le canal</div></div><label class="sw"><input type="checkbox" id="a-auto"><span></span></label></div>
+      <div class="row"><div><div class="lb">Posts max par heure</div><div class="ds">Pour ne pas spammer tes abonnés</div></div><input class="num" id="a-maxh" type="number" min="1" max="30"></div>
+    </div>
+    <div class="box"><h3>Mots à exclure</h3>
+      <div class="row" style="display:block"><input class="txt" id="a-exclus" placeholder="ex : coque, câble, reconditionné"><div class="hint">Séparés par des virgules. Les pépites contenant ces mots sont ignorées.</div></div>
+    </div>
+  </div>
+  <div id="t-perso" style="display:none">
+    <div class="box"><h3>Mes recherches précises</h3>
+      <div class="hint">Le bot t'alerte 🎯 en priorité dès qu'une pépite Amazon contient ce mot (ex : PS5, Dyson, iPhone 16), même si elle est peu populaire.</div>
+      <div id="r-liste"></div>
+      <div class="add"><input class="txt" id="r-mot" placeholder="Mot-clé (ex : PS5)"><input class="num" id="r-prix" type="number" min="0" placeholder="€ max"><button id="r-add">Ajouter</button></div>
+      <div class="row"><div><div class="lb">Uniquement mes recherches</div><div class="ds">Ne reçois que les pépites qui correspondent</div></div><label class="sw"><input type="checkbox" id="a-seul"><span></span></label></div>
+    </div>
+  </div>
+  <button class="save" id="a-save">💾 Enregistrer les réglages</button>
+  <div class="hint" style="text-align:center">Réservé à l'administrateur. Les réglages ne sont acceptés que depuis ton compte Telegram.</div>
 </div>
 <main class="grid" id="grid"></main>
 <footer>
@@ -190,6 +251,7 @@ function demoData(){
 }
 
 async function charger(){
+  if (new URLSearchParams(location.search).get("admin") === "1") return;
   const configure = !CONFIG.GITHUB_USER.startsWith("TON_");
   if (!configure){
     const d = demoData(); etat.deals = d.deals; etat.maj = d.maj; etat.demo = true;
@@ -217,6 +279,52 @@ document.getElementById("grid").innerHTML = Array(6).fill('<div class="sk"></div
 charger();
 setInterval(charger, 120000);
 setInterval(majTexte, 30000);
+/* ---------------- Admin (ouvert uniquement depuis le bouton prive du bot) ---------------- */
+(function(){
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("admin") !== "1") return;
+  let R = {};
+  try { R = JSON.parse(decodeURIComponent(escape(atob((qs.get("cfg")||"").replace(/-/g,"+").replace(/_/g,"/"))))); } catch(e) { R = {}; }
+  document.body.classList.add("mode-admin");
+  document.querySelector("h1").textContent = "Admin · Réglages";
+  document.getElementById("maj").innerHTML = '<span class="live"></span>Bot connecté';
+  const $ = id => document.getElementById(id);
+  $("a-erreurs").checked = R.erreurs !== false;
+  $("a-bons").checked = R.bons_plans !== false;
+  $("a-temp").value = R.temp_min || 0;
+  $("a-prixmax").value = R.prix_max || 0;
+  $("a-intervalle").value = R.intervalle || 5;
+  $("a-auto").checked = !!R.auto;
+  $("a-maxh").value = R.max_heure || 6;
+  $("a-exclus").value = (R.mots_exclus || []).join(", ");
+  $("a-seul").checked = !!R.seulement_recherches;
+  let rech = (R.recherches || []).slice();
+  function liste(){
+    $("r-liste").innerHTML = rech.length ? rech.map((r,i)=>`<div class="rech"><b>🎯 ${esc(r.mot)}</b><small>${r.prix_max ? "≤ "+r.prix_max+" €" : "tous prix"}</small><button data-i="${i}">Retirer</button></div>`).join("")
+      : '<div class="hint">Aucune recherche pour l\'instant.</div>';
+    $("r-liste").querySelectorAll("button").forEach(b => b.onclick = () => { rech.splice(+b.dataset.i,1); liste(); });
+  }
+  liste();
+  $("r-add").onclick = () => {
+    const mot = $("r-mot").value.trim(); if (!mot) return;
+    rech.push({mot, prix_max: +$("r-prix").value || null}); $("r-mot").value = ""; $("r-prix").value = ""; liste();
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+  };
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+    $("t-base").style.display = t.dataset.t === "base" ? "" : "none";
+    $("t-perso").style.display = t.dataset.t === "perso" ? "" : "none";
+  });
+  $("a-save").onclick = () => {
+    const data = {v:1, erreurs:$("a-erreurs").checked, bons_plans:$("a-bons").checked,
+      temp_min:+$("a-temp").value||0, prix_max:+$("a-prixmax").value||0, intervalle:Math.max(3,+$("a-intervalle").value||5),
+      auto:$("a-auto").checked, max_heure:Math.max(1,+$("a-maxh").value||6),
+      mots_exclus:$("a-exclus").value.split(",").map(x=>x.trim()).filter(Boolean),
+      recherches:rech, seulement_recherches:$("a-seul").checked};
+    if (tg && tg.sendData && tg.initData !== undefined) { tg.sendData(JSON.stringify(data)); }
+    else { alert("Ouvre les réglages depuis le bouton ⚙️ Réglages de ton bot Telegram."); }
+  };
+})();
 </script>
 </body>
 </html>
