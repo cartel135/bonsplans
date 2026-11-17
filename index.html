@@ -94,6 +94,15 @@
   .add button{background:var(--tg);color:#fff}
   .save{position:sticky;bottom:12px;width:100%;margin-top:6px;border:0;border-radius:14px;padding:15px;background:var(--grn);color:#062;font-weight:900;font-size:16px;cursor:pointer}
   .hint{font-size:12px;color:var(--mut);padding:6px 2px 10px;line-height:1.45}
+
+  .seg{display:flex;gap:6px;margin:12px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:5px}
+  .seg div{flex:1;text-align:center;padding:11px 4px;border-radius:12px;font-weight:800;font-size:14px;color:var(--mut);cursor:pointer;white-space:nowrap}
+  .seg div.on{color:#fff}
+  .seg div.on[data-v="erreur"]{background:var(--red)}
+  .seg div.on[data-v="bon"]{background:var(--org)}
+  .seg div.on[data-v="tout"]{background:#3a4560}
+  .seg small{display:block;font-size:11px;font-weight:700;opacity:.85;margin-top:1px}
+  body.mode-admin .seg{display:none}
 </style>
 </head>
 <body>
@@ -109,6 +118,11 @@
 <div class="search">
   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
   <input id="q" type="search" placeholder="Rechercher un produit…" autocomplete="off">
+</div>
+<div class="seg" id="seg">
+  <div data-v="erreur">🚨 Erreurs de prix<small id="n-erreur"></small></div>
+  <div data-v="bon">🔥 Bons plans<small id="n-bon"></small></div>
+  <div data-v="tout">Tout<small id="n-tout"></small></div>
 </div>
 <div class="chips" id="chips"></div>
 <div class="bar">
@@ -161,7 +175,6 @@ if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor("#0a0d18"); tg.setBac
 
 const CATS = [
   {id:"tout", nom:"Tout"},
-  {id:"erreur", nom:"🚨 Erreurs de prix", cls:"err"},
   {id:"High-tech", nom:"📱 High-tech"},
   {id:"Gaming", nom:"🎮 Gaming"},
   {id:"Maison", nom:"🏠 Maison"},
@@ -174,7 +187,20 @@ const CATS = [
   {id:"Autres", nom:"✨ Autres"},
 ];
 const ICONES = {"High-tech":"🎧","Gaming":"🎮","Maison":"🏠","Cuisine":"🍳","Beauté":"💄","Mode":"👟","Sport":"⌚","Enfants":"🧸","Bricolage":"🔧","Autres":"🛍️"};
-let etat = {cat:"tout", q:"", tri:"date", deals:[], maj:0, demo:false};
+let etat = {cat:"tout", type:"tout", q:"", tri:"date", deals:[], maj:0, demo:false};
+try { etat.type = localStorage.getItem("type") || "tout"; } catch(e) {}
+const duType = d => etat.type === "tout" || (etat.type === "erreur" ? d.erreur : !d.erreur);
+function seg(){
+  const n = {erreur: etat.deals.filter(d=>d.erreur).length, bon: etat.deals.filter(d=>!d.erreur).length, tout: etat.deals.length};
+  for (const k in n) document.getElementById("n-"+k).textContent = n[k] + (n[k]>1?" offres":" offre");
+  document.querySelectorAll("#seg div").forEach(x => x.classList.toggle("on", x.dataset.v === etat.type));
+}
+document.querySelectorAll("#seg div").forEach(x => x.onclick = () => {
+  etat.type = x.dataset.v; etat.cat = "tout";
+  try { localStorage.setItem("type", etat.type); } catch(e) {}
+  if (tg && tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+  rendu();
+});
 
 const euros = c => (c/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 function ilya(sec){
@@ -189,7 +215,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">"
 function chips(){
   const el = document.getElementById("chips");
   el.innerHTML = CATS.map(c => {
-    const n = c.id==="tout" ? etat.deals.length : etat.deals.filter(d => c.id==="erreur" ? d.erreur : d.categorie===c.id).length;
+    const base = etat.deals.filter(duType);
+    const n = c.id==="tout" ? base.length : base.filter(d => d.categorie===c.id).length;
     if (c.id!=="tout" && n===0 && etat.cat!==c.id) return "";
     return `<div class="chip ${c.cls||""} ${etat.cat===c.id?"on":""}" data-c="${c.id}">${c.nom}${c.id!=="tout"?" · "+n:""}</div>`;
   }).join("");
@@ -199,18 +226,18 @@ function chips(){
 }
 
 function rendu(){
-  chips();
+  seg(); chips();
   const q = etat.q.trim().toLowerCase();
-  let l = etat.deals.filter(d =>
-    (etat.cat==="tout" || (etat.cat==="erreur" ? d.erreur : d.categorie===etat.cat)) &&
+  let l = etat.deals.filter(d => duType(d) &&
+    (etat.cat==="tout" || d.categorie===etat.cat) &&
     (!q || d.titre.toLowerCase().includes(q)));
   const tri = {
     date:(a,b)=>b.date-a.date, baisse:(a,b)=>b.baisse-a.baisse,
     eco:(a,b)=>(b.ref-b.prix)-(a.ref-a.prix), prix:(a,b)=>a.prix-b.prix }[etat.tri];
   l.sort(tri);
-  document.getElementById("count").textContent = l.length + (l.length>1?" bons plans":" bon plan");
+  document.getElementById("count").textContent = l.length + (etat.type==="erreur" ? (l.length>1?" erreurs de prix":" erreur de prix") : (l.length>1?" offres":" offre"));
   const g = document.getElementById("grid");
-  if (!l.length){ g.innerHTML = `<div class="empty">Aucun bon plan ici pour l'instant.<br>Le bot scanne Amazon en continu, reviens dans quelques minutes 👀</div>`; return; }
+  if (!l.length){ g.innerHTML = `<div class="empty">${etat.type==="erreur" ? "Aucune erreur de prix en ce moment." : "Aucun bon plan ici pour l'instant."}<br>Le bot scanne Amazon en continu, reviens dans quelques minutes 👀</div>`; return; }
   g.innerHTML = l.slice(0,120).map((d,i) => `
     <div class="card ${d.erreur?"err":""}" style="animation-delay:${Math.min(i,10)*30}ms">
       <div class="img">
@@ -220,7 +247,7 @@ function rendu(){
       </div>
       <div class="body">
         <div class="t">${esc(d.titre)}</div>
-        ${d.ref > d.prix ? `<div class="old">${euros(d.ref)}</div>` : `<div class="old" style="text-decoration:none">Bon plan</div>`}
+        ${d.ref > d.prix ? `<div class="old">${euros(d.ref)}</div>` : `<div class="old" style="text-decoration:none">${d.erreur ? "Erreur de prix" : "Bon plan"}</div>`}
         <div class="new">${euros(d.prix)}</div>
         <div class="meta">${ilya(d.date)} · ${esc(d.categorie)}</div>
         <button class="btn" data-u="${esc(d.lien)}">Voir l'offre</button>
