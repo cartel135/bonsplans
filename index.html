@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sniper Bons Plans</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  /* ============ A MODIFIER : ton compte GitHub et ton depot ============ */
+  const CONFIG = {
+    GITHUB_USER: "cartel135",   // ex : "lucas-dev"
+    GITHUB_REPO: "bonsplans",           // nom du depot
+    BRANCHE_DONNEES: "data",            // ne pas changer
+    ADMIN_ID: null                      // plus tard : ton identifiant Telegram pour la section admin
+  };
+</script>
+<style>
+  :root{
+    --bg:#0a0d18; --bg2:#161c30; --card:#1c243a; --line:#2a3452;
+    --txt:#fff; --mut:#96a0b9; --red:#ff3b46; --org:#ff8c1a; --grn:#2edc78; --tg:#2aabee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif}
+  body{min-height:100vh;padding-bottom:40px;background:radial-gradient(120% 50% at 50% 0%,var(--bg2) 0%,var(--bg) 70%) fixed}
+  header{padding:18px 16px 6px;display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:50%;background:var(--tg);display:grid;place-items:center;flex:none}
+  .logo svg{width:24px;height:24px}
+  h1{font-size:20px;font-weight:800;letter-spacing:-.3px}
+  .maj{font-size:12.5px;color:var(--mut);margin-top:2px}
+  .maj b{color:var(--grn);font-weight:700}
+  .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--grn);margin-right:5px;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .demo{margin:8px 16px 0;padding:8px 12px;border-radius:12px;background:#3a2a10;color:#ffcf8a;font-size:12.5px}
+  .search{margin:12px 16px 0;position:relative}
+  .search input{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:15px;outline:none}
+  .search input:focus{border-color:var(--tg)}
+  .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:18px;height:18px;opacity:.6}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:12px 16px 4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--txt);color:var(--bg);border-color:var(--txt)}
+  .chip.err.on{background:var(--red);border-color:var(--red);color:#fff}
+  .bar{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 10px;font-size:13px;color:var(--mut)}
+  .bar select{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-size:13px;outline:none}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px}
+  .card{background:var(--card);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;border:1px solid transparent;animation:in .35s ease both}
+  .card.err{border-color:rgba(255,59,70,.55)}
+  @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .img{position:relative;background:#fff;aspect-ratio:1/1;display:grid;place-items:center}
+  .img img{max-width:86%;max-height:86%;object-fit:contain}
+  .badge{position:absolute;top:8px;left:8px;background:var(--org);color:#fff;font-weight:900;font-size:14px;padding:4px 8px;border-radius:10px}
+  .card.err .badge{background:var(--red)}
+  .tag{position:absolute;bottom:8px;left:8px;right:8px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;text-align:center;padding:4px;border-radius:8px;letter-spacing:.3px}
+  .body{padding:10px 10px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
+  .t{font-size:13px;line-height:1.3;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
+  .old{font-size:12.5px;color:var(--mut);text-decoration:line-through;text-decoration-color:var(--red)}
+  .new{font-size:21px;font-weight:900;color:var(--grn);letter-spacing:-.4px;line-height:1}
+  .meta{font-size:11.5px;color:var(--mut);margin-top:auto;padding-top:4px}
+  .btn{margin-top:6px;border:0;border-radius:12px;background:var(--tg);color:#fff;font-weight:800;font-size:14px;padding:10px;cursor:pointer;width:100%}
+  .btn:active{transform:scale(.97)}
+  .empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:50px 20px;font-size:14px;line-height:1.5}
+  .sk{background:linear-gradient(90deg,var(--card) 0%,#232c46 50%,var(--card) 100%);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:18px;aspect-ratio:.62}
+  @keyframes sh{to{background-position:-200% 0}}
+  footer{padding:24px 20px 0;text-align:center;font-size:11.5px;color:var(--mut);line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="#fff"><path d="M2 11.2 21 3.8c.9-.3 1.6.2 1.3 1.5l-3.2 15.1c-.2 1.1-.9 1.3-1.8.8l-5-3.7-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L5.4 13.9.6 12.4c-1-.3-1-1 .2-1.5z"/></svg></div>
+  <div>
+    <h1>Sniper Bons Plans</h1>
+    <div class="maj" id="maj"><span class="live"></span>Chargement…</div>
+  </div>
+</header>
+<div id="demo"></div>
+
+<div class="search">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+  <input id="q" type="search" placeholder="Rechercher un produit…" autocomplete="off">
+</div>
+<div class="chips" id="chips"></div>
+<div class="bar">
+  <span id="count"></span>
+  <select id="tri">
+    <option value="date">Plus récents</option>
+    <option value="baisse">Plus grosse réduction</option>
+    <option value="eco">Plus grosse économie</option>
+    <option value="prix">Prix croissant</option>
+  </select>
+</div>
+<main class="grid" id="grid"></main>
+<footer>
+  Les prix Amazon changent vite : vérifie toujours le prix sur la page avant d'acheter.<br>
+  Liens affiliés : le canal touche une petite commission sur tes achats, sans aucun surcoût pour toi.
+</footer>
+
+<script>
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor("#0a0d18"); tg.setBackgroundColor("#0a0d18"); } catch(e){} }
+
+const CATS = [
+  {id:"tout", nom:"Tout"},
+  {id:"erreur", nom:"🚨 Erreurs de prix", cls:"err"},
+  {id:"High-tech", nom:"📱 High-tech"},
+  {id:"Gaming", nom:"🎮 Gaming"},
+  {id:"Maison", nom:"🏠 Maison"},
+  {id:"Cuisine", nom:"🍳 Cuisine"},
+  {id:"Beauté", nom:"💄 Beauté"},
+  {id:"Mode", nom:"👟 Mode"},
+  {id:"Sport", nom:"⚽ Sport"},
+  {id:"Enfants", nom:"🧸 Enfants"},
+  {id:"Bricolage", nom:"🔧 Bricolage"},
+  {id:"Autres", nom:"✨ Autres"},
+];
+const ICONES = {"High-tech":"🎧","Gaming":"🎮","Maison":"🏠","Cuisine":"🍳","Beauté":"💄","Mode":"👟","Sport":"⌚","Enfants":"🧸","Bricolage":"🔧","Autres":"🛍️"};
+let etat = {cat:"tout", q:"", tri:"date", deals:[], maj:0, demo:false};
+
+const euros = c => (c/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+function ilya(sec){
+  const s = Math.max(0, Math.floor(Date.now()/1000 - sec));
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return "il y a " + Math.floor(s/60) + " min";
+  if (s < 86400) return "il y a " + Math.floor(s/3600) + " h";
+  return "il y a " + Math.floor(s/86400) + " j";
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function chips(){
+  const el = document.getElementById("chips");
+  el.innerHTML = CATS.map(c => {
+    const n = c.id==="tout" ? etat.deals.length : etat.deals.filter(d => c.id==="erreur" ? d.erreur : d.categorie===c.id).length;
+    if (c.id!=="tout" && n===0 && etat.cat!==c.id) return "";
+    return `<div class="chip ${c.cls||""} ${etat.cat===c.id?"on":""}" data-c="${c.id}">${c.nom}${c.id!=="tout"?" · "+n:""}</div>`;
+  }).join("");
+  el.querySelectorAll(".chip").forEach(ch => ch.onclick = () => {
+    etat.cat = ch.dataset.c; if (tg && tg.HapticFeedback) tg.HapticFeedback.selectionChanged(); rendu();
+  });
+}
+
+function rendu(){
+  chips();
+  const q = etat.q.trim().toLowerCase();
+  let l = etat.deals.filter(d =>
+    (etat.cat==="tout" || (etat.cat==="erreur" ? d.erreur : d.categorie===etat.cat)) &&
+    (!q || d.titre.toLowerCase().includes(q)));
+  const tri = {
+    date:(a,b)=>b.date-a.date, baisse:(a,b)=>b.baisse-a.baisse,
+    eco:(a,b)=>(b.ref-b.prix)-(a.ref-a.prix), prix:(a,b)=>a.prix-b.prix }[etat.tri];
+  l.sort(tri);
+  document.getElementById("count").textContent = l.length + (l.length>1?" bons plans":" bon plan");
+  const g = document.getElementById("grid");
+  if (!l.length){ g.innerHTML = `<div class="empty">Aucun bon plan ici pour l'instant.<br>Le bot scanne Amazon en continu, reviens dans quelques minutes 👀</div>`; return; }
+  g.innerHTML = l.slice(0,120).map((d,i) => `
+    <div class="card ${d.erreur?"err":""}" style="animation-delay:${Math.min(i,10)*30}ms">
+      <div class="img">
+        ${d.image ? `<img src="${esc(d.image)}" loading="lazy" alt="">` : `<span style="font-size:54px">${ICONES[d.categorie]||"🛍️"}</span>`}
+        <div class="badge">-${Math.round(d.baisse)}%</div>
+        ${d.erreur ? `<div class="tag">ERREUR DE PRIX ?</div>` : ""}
+      </div>
+      <div class="body">
+        <div class="t">${esc(d.titre)}</div>
+        <div class="old">${euros(d.ref)}</div>
+        <div class="new">${euros(d.prix)}</div>
+        <div class="meta">${ilya(d.date)} · ${esc(d.categorie)}</div>
+        <button class="btn" data-u="${esc(d.lien)}">Voir l'offre</button>
+      </div>
+    </div>`).join("");
+  g.querySelectorAll(".btn").forEach(b => b.onclick = () => {
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
+    if (tg && tg.openLink) tg.openLink(b.dataset.u); else window.open(b.dataset.u, "_blank");
+  });
+}
+
+function majTexte(){
+  const el = document.getElementById("maj");
+  if (!etat.maj) return;
+  el.innerHTML = `<span class="live"></span>Mis à jour ${ilya(etat.maj)} · <b>${etat.deals.length} offres</b>`;
+}
+
+function demoData(){
+  const now = Date.now()/1000, img = "";
+  return {maj: now-60, deals: [
+    {asin:"D1",titre:"Casque Bluetooth à réduction de bruit active, 40 h d'autonomie",prix:3999,ref:12999,baisse:69,erreur:true,categorie:"High-tech",date:now-120,lien:"https://www.amazon.fr",image:img},
+    {asin:"D2",titre:"Robot aspirateur laveur avec cartographie laser",prix:14999,ref:34999,baisse:57,erreur:false,categorie:"Maison",date:now-900,lien:"https://www.amazon.fr",image:img},
+    {asin:"D3",titre:"Écran PC 27 pouces QHD 165 Hz",prix:15999,ref:27999,baisse:43,erreur:false,categorie:"Gaming",date:now-1800,lien:"https://www.amazon.fr",image:img},
+    {asin:"D4",titre:"Montre connectée sport GPS cardio étanche",prix:7999,ref:19999,baisse:60,erreur:true,categorie:"Sport",date:now-3000,lien:"https://www.amazon.fr",image:img},
+    {asin:"D5",titre:"Friteuse sans huile 6 L double tiroir",prix:6999,ref:12999,baisse:46,erreur:false,categorie:"Cuisine",date:now-5400,lien:"https://www.amazon.fr",image:img},
+    {asin:"D6",titre:"Coffret LEGO créatif 900 pièces",prix:2499,ref:4999,baisse:50,erreur:false,categorie:"Enfants",date:now-7200,lien:"https://www.amazon.fr",image:img},
+  ]};
+}
+
+async function charger(){
+  const configure = !CONFIG.GITHUB_USER.startsWith("TON_");
+  if (!configure){
+    const d = demoData(); etat.deals = d.deals; etat.maj = d.maj; etat.demo = true;
+    document.getElementById("demo").innerHTML = `<div class="demo">Mode démo : ces offres sont des exemples. Renseigne ton compte GitHub dans index.html pour afficher les vraies.</div>`;
+    majTexte(); rendu(); return;
+  }
+  const url = `https://raw.githubusercontent.com/${CONFIG.GITHUB_USER}/${CONFIG.GITHUB_REPO}/${CONFIG.BRANCHE_DONNEES}/deals.json?t=${Date.now()}`;
+  try{
+    const r = await fetch(url, {cache:"no-store"});
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    etat.deals = data.deals || []; etat.maj = data.maj || 0;
+    majTexte(); rendu();
+  }catch(e){
+    if (!etat.deals.length){
+      document.getElementById("grid").innerHTML = `<div class="empty">Les premières offres arrivent très vite 👀<br>Le bot scanne Amazon en continu, reviens dans quelques minutes.</div>`;
+      document.getElementById("maj").textContent = "En attente des premières offres";
+    }
+  }
+}
+
+document.getElementById("q").addEventListener("input", e => { etat.q = e.target.value; rendu(); });
+document.getElementById("tri").addEventListener("change", e => { etat.tri = e.target.value; rendu(); });
+document.getElementById("grid").innerHTML = Array(6).fill('<div class="sk"></div>').join("");
+charger();
+setInterval(charger, 120000);
+setInterval(majTexte, 30000);
+</script>
+</body>
+</html>
