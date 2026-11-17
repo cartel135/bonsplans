@@ -11,7 +11,8 @@
     GITHUB_USER: "cartel135",   // ex : "lucas-dev"
     GITHUB_REPO: "bonsplans",           // nom du depot
     BRANCHE_DONNEES: "data",            // ne pas changer
-    ADMIN_ID: null                      // plus tard : ton identifiant Telegram pour la section admin
+    ADMIN_ID: 5435960445,               // ton identifiant Telegram (toi seul vois les ⋯)
+    BOT: "SniperBonsPlansFR_bot"
   };
 </script>
 <style>
@@ -103,6 +104,11 @@
   .seg div.on[data-v="tout"]{background:#3a4560}
   .seg small{display:block;font-size:11px;font-weight:700;opacity:.85;margin-top:1px}
   body.mode-admin .seg{display:none}
+  .vend{display:inline-block;font-size:11px;font-weight:800;padding:3px 7px;border-radius:7px;margin-top:2px;align-self:flex-start}
+  .vend.amazon{background:rgba(46,220,120,.15);color:var(--grn)}
+  .vend.tiers{background:rgba(255,140,26,.15);color:var(--org)}
+  .vend.seconde{background:rgba(42,171,238,.15);color:var(--tg)}
+  .dots{position:absolute;top:6px;right:6px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(10,13,24,.75);color:#fff;font-size:20px;font-weight:900;line-height:1;cursor:pointer;display:grid;place-items:center}
 </style>
 </head>
 <body>
@@ -189,6 +195,7 @@ const CATS = [
 const ICONES = {"High-tech":"🎧","Gaming":"🎮","Maison":"🏠","Cuisine":"🍳","Beauté":"💄","Mode":"👟","Sport":"⌚","Enfants":"🧸","Bricolage":"🔧","Autres":"🛍️"};
 let etat = {cat:"tout", type:"tout", q:"", tri:"date", deals:[], maj:0, demo:false};
 try { etat.type = localStorage.getItem("type") || "tout"; } catch(e) {}
+const ADMIN = !!(tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id === CONFIG.ADMIN_ID);
 const duType = d => etat.type === "tout" || (etat.type === "erreur" ? d.erreur : !d.erreur);
 function seg(){
   const n = {erreur: etat.deals.filter(d=>d.erreur).length, bon: etat.deals.filter(d=>!d.erreur).length, tout: etat.deals.length};
@@ -244,15 +251,24 @@ function rendu(){
         ${d.image ? `<img src="${esc(d.image)}" loading="lazy" alt="">` : `<span style="font-size:54px">${ICONES[d.categorie]||"🛍️"}</span>`}
         ${d.baisse >= 1 ? `<div class="badge">-${Math.round(d.baisse)}%</div>` : ""}
         ${d.erreur ? `<div class="tag">ERREUR DE PRIX ?</div>` : ""}
+        ${ADMIN ? `<button class="dots" data-a="${esc(d.asin)}" title="Gérer l'annonce">⋯</button>` : ""}
       </div>
       <div class="body">
         <div class="t">${esc(d.titre)}</div>
+        ${d.vendeur ? `<div class="vend ${d.vendeur}">${{amazon:"✅ Vendu par Amazon", tiers:"🏪 Vendeur tiers", seconde:"♻️ Seconde Main"}[d.vendeur]||""}</div>` : ""}
         ${d.ref > d.prix ? `<div class="old">${euros(d.ref)}</div>` : `<div class="old" style="text-decoration:none">${d.erreur ? "Erreur de prix" : "Bon plan"}</div>`}
         <div class="new">${euros(d.prix)}</div>
         <div class="meta">${ilya(d.date)} · ${esc(d.categorie)}</div>
         <button class="btn" data-u="${esc(d.lien)}">Voir l'offre</button>
       </div>
     </div>`).join("");
+  g.querySelectorAll(".dots").forEach(b => b.onclick = (e) => {
+    e.stopPropagation();
+    const a = String(b.dataset.a).replace(/[^A-Za-z0-9_-]/g, "");
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("medium");
+    const url = `https://t.me/${CONFIG.BOT}?start=del_${a}`;
+    if (tg && tg.openTelegramLink) tg.openTelegramLink(url); else window.open(url, "_blank");
+  });
   g.querySelectorAll(".btn").forEach(b => b.onclick = () => {
     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
     if (tg && tg.openLink) tg.openLink(b.dataset.u); else window.open(b.dataset.u, "_blank");
