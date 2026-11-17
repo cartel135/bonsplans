@@ -49,12 +49,16 @@
   @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .img{position:relative;background:#fff;aspect-ratio:1/1;display:grid;place-items:center}
   .img img{max-width:86%;max-height:86%;object-fit:contain}
-  .badge{position:absolute;top:8px;left:8px;background:var(--org);color:#fff;font-weight:900;font-size:14px;padding:4px 8px;border-radius:10px}
+  .badge{position:absolute;top:8px;left:8px;background:var(--org);color:#fff;font-weight:900;font-size:16px;padding:5px 9px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
   .card.err .badge{background:var(--red)}
   .tag{position:absolute;bottom:8px;left:8px;right:8px;background:var(--red);color:#fff;font-size:10.5px;font-weight:800;text-align:center;padding:4px;border-radius:8px;letter-spacing:.3px}
   .body{padding:10px 10px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
   .t{font-size:13px;line-height:1.3;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:34px}
-  .old{font-size:12.5px;color:var(--mut);text-decoration:line-through;text-decoration-color:var(--red)}
+  .old{font-size:12.5px;color:var(--mut)}
+  .px{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+  .barre{font-size:14.5px;font-weight:700;color:#aeb6cc;text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:2px}
+  .eco{align-self:flex-start;font-size:11.5px;font-weight:800;color:#fff;background:linear-gradient(90deg,var(--red),var(--org));padding:3px 8px;border-radius:8px}
+  .tag.fou{background:linear-gradient(90deg,#a020f0,var(--red))}
   .new{font-size:21px;font-weight:900;color:var(--grn);letter-spacing:-.4px;line-height:1}
   .meta{font-size:11.5px;color:var(--mut);margin-top:auto;padding-top:4px}
   .btn{margin-top:6px;border:0;border-radius:12px;background:var(--tg);color:#fff;font-weight:800;font-size:14px;padding:10px;cursor:pointer;width:100%}
@@ -126,7 +130,7 @@
   <input id="q" type="search" placeholder="Rechercher un produit…" autocomplete="off">
 </div>
 <div class="seg" id="seg">
-  <div data-v="erreur">🚨 Erreurs de prix<small id="n-erreur"></small></div>
+  <div data-v="erreur">🚨 Erreurs & prix fous<small id="n-erreur"></small></div>
   <div data-v="bon">🔥 Bons plans<small id="n-bon"></small></div>
   <div data-v="tout">Tout<small id="n-tout"></small></div>
 </div>
@@ -145,6 +149,8 @@
   <div id="t-base">
     <div class="box"><h3>Alertes</h3>
       <div class="row"><div><div class="lb">🚨 Erreurs de prix</div><div class="ds">Les erreurs de prix Amazon repérées</div></div><label class="sw"><input type="checkbox" id="a-erreurs"><span></span></label></div>
+      <div class="row"><div><div class="lb">🏬 Erreurs de tous les magasins</div><div class="ds">Fnac, Cdiscount, Boulanger… (lien vers le deal, sans commission)</div></div><label class="sw"><input type="checkbox" id="a-tous"><span></span></label></div>
+      <div class="row"><div><div class="lb">🤯 Prix fou à partir de</div><div class="ds">Remise en % (rangé avec les erreurs de prix)</div></div><input class="num" id="a-fou" type="number" min="30" max="95" step="5"></div>
       <div class="row"><div><div class="lb">🔥 Bons plans Amazon</div><div class="ds">Les nouveaux bons plans Amazon</div></div><label class="sw"><input type="checkbox" id="a-bons"><span></span></label></div>
       <div class="row"><div><div class="lb">Popularité minimum</div><div class="ds">En degrés Dealabs (0 = tout)</div></div><input class="num" id="a-temp" type="number" min="0" step="10"></div>
       <div class="row"><div><div class="lb">Prix maximum</div><div class="ds">En € (0 = pas de limite)</div></div><input class="num" id="a-prixmax" type="number" min="0" step="10"></div>
@@ -152,7 +158,9 @@
     </div>
     <div class="box"><h3>Canal</h3>
       <div class="row"><div><div class="lb">🤖 Publication automatique</div><div class="ds">Publie seul les pépites Amazon dans le canal</div></div><label class="sw"><input type="checkbox" id="a-auto"><span></span></label></div>
-      <div class="row"><div><div class="lb">Posts max par heure</div><div class="ds">Pour ne pas spammer tes abonnés</div></div><input class="num" id="a-maxh" type="number" min="1" max="30"></div>
+      <div class="row"><div><div class="lb">🔥 Bons plans max par heure</div><div class="ds">Pour ne pas spammer tes abonnés</div></div><input class="num" id="a-maxh" type="number" min="1" max="30"></div>
+      <div class="row" style="display:block"><div class="lb">💬 Contact support</div><div class="ds" style="margin-bottom:8px">Ton @ Telegram, ajouté en bouton sous chaque post (vide = pas de bouton)</div><input class="txt" id="a-support" placeholder="@sniper_support"></div>
+      <div class="row"><div><div class="lb">🚨 Erreurs de prix max par heure</div><div class="ds">Compté à part des bons plans</div></div><input class="num" id="a-maxe" type="number" min="1" max="30"></div>
     </div>
     <div class="box"><h3>Mots à exclure</h3>
       <div class="row" style="display:block"><input class="txt" id="a-exclus" placeholder="ex : coque, câble, reconditionné"><div class="hint">Séparés par des virgules. Les pépites contenant ces mots sont ignorées.</div></div>
@@ -196,9 +204,10 @@ const ICONES = {"High-tech":"🎧","Gaming":"🎮","Maison":"🏠","Cuisine":"�
 let etat = {cat:"tout", type:"tout", q:"", tri:"date", deals:[], maj:0, demo:false};
 try { etat.type = localStorage.getItem("type") || "tout"; } catch(e) {}
 const ADMIN = !!(tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id === CONFIG.ADMIN_ID);
-const duType = d => etat.type === "tout" || (etat.type === "erreur" ? d.erreur : !d.erreur);
+const chaud = d => !!(d.erreur || d.fou);
+const duType = d => etat.type === "tout" || (etat.type === "erreur" ? chaud(d) : !chaud(d));
 function seg(){
-  const n = {erreur: etat.deals.filter(d=>d.erreur).length, bon: etat.deals.filter(d=>!d.erreur).length, tout: etat.deals.length};
+  const n = {erreur: etat.deals.filter(chaud).length, bon: etat.deals.filter(d=>!chaud(d)).length, tout: etat.deals.length};
   for (const k in n) document.getElementById("n-"+k).textContent = n[k] + (n[k]>1?" offres":" offre");
   document.querySelectorAll("#seg div").forEach(x => x.classList.toggle("on", x.dataset.v === etat.type));
 }
@@ -242,22 +251,23 @@ function rendu(){
     date:(a,b)=>b.date-a.date, baisse:(a,b)=>b.baisse-a.baisse,
     eco:(a,b)=>(b.ref-b.prix)-(a.ref-a.prix), prix:(a,b)=>a.prix-b.prix }[etat.tri];
   l.sort(tri);
-  document.getElementById("count").textContent = l.length + (etat.type==="erreur" ? (l.length>1?" erreurs de prix":" erreur de prix") : (l.length>1?" offres":" offre"));
+  document.getElementById("count").textContent = l.length + (etat.type==="erreur" ? (l.length>1?" grosses affaires":" grosse affaire") : (l.length>1?" offres":" offre"));
   const g = document.getElementById("grid");
-  if (!l.length){ g.innerHTML = `<div class="empty">${etat.type==="erreur" ? "Aucune erreur de prix en ce moment." : "Aucun bon plan ici pour l'instant."}<br>Le bot scanne Amazon en continu, reviens dans quelques minutes 👀</div>`; return; }
+  if (!l.length){ g.innerHTML = `<div class="empty">${etat.type==="erreur" ? "Aucune erreur de prix ni prix fou en ce moment.<br>Elles sont rares : active les notifications du canal pour ne pas les rater 🔔" : "Aucun bon plan ici pour l'instant."}<br>Le bot scanne Amazon en continu, reviens dans quelques minutes 👀</div>`; return; }
   g.innerHTML = l.slice(0,120).map((d,i) => `
-    <div class="card ${d.erreur?"err":""}" style="animation-delay:${Math.min(i,10)*30}ms">
+    <div class="card ${chaud(d)?"err":""}" style="animation-delay:${Math.min(i,10)*30}ms">
       <div class="img">
         ${d.image ? `<img src="${esc(d.image)}" loading="lazy" alt="">` : `<span style="font-size:54px">${ICONES[d.categorie]||"🛍️"}</span>`}
         ${d.baisse >= 1 ? `<div class="badge">-${Math.round(d.baisse)}%</div>` : ""}
-        ${d.erreur ? `<div class="tag">ERREUR DE PRIX ?</div>` : ""}
+        ${d.erreur ? `<div class="tag">ERREUR DE PRIX ?</div>` : d.fou ? `<div class="tag fou">🤯 PRIX FOU</div>` : ""}
         ${ADMIN ? `<button class="dots" data-a="${esc(d.asin)}" title="Gérer l'annonce">⋯</button>` : ""}
       </div>
       <div class="body">
         <div class="t">${esc(d.titre)}</div>
-        ${d.vendeur ? `<div class="vend ${d.vendeur}">${{amazon:"✅ Vendu par Amazon", tiers:"🏪 Vendeur tiers", seconde:"♻️ Seconde Main"}[d.vendeur]||""}</div>` : ""}
-        ${d.ref > d.prix ? `<div class="old">${euros(d.ref)}</div>` : `<div class="old" style="text-decoration:none">${d.erreur ? "Erreur de prix" : "Bon plan"}</div>`}
-        <div class="new">${euros(d.prix)}</div>
+        ${d.vendeur ? `<div class="vend ${d.vendeur}">${({amazon:"✅ Vendu par Amazon", tiers:"🏪 Vendeur tiers", seconde:"♻️ Seconde Main"}[d.vendeur] || (d.marchand ? "🏬 Chez " + esc(d.marchand) : ""))}</div>` : ""}
+        ${d.ref > d.prix
+          ? `<div class="px"><div class="new">${euros(d.prix)}</div><div class="barre">${euros(d.ref)}</div></div><div class="eco">-${euros(d.ref - d.prix)} d'économie</div>`
+          : `<div class="old">${d.erreur ? "Erreur de prix" : "Bon plan"}</div><div class="new">${euros(d.prix)}</div>`}
         <div class="meta">${ilya(d.date)} · ${esc(d.categorie)}</div>
         <button class="btn" data-u="${esc(d.lien)}">Voir l'offre</button>
       </div>
@@ -334,11 +344,15 @@ setInterval(majTexte, 30000);
   const $ = id => document.getElementById(id);
   $("a-erreurs").checked = R.erreurs !== false;
   $("a-bons").checked = R.bons_plans !== false;
+  $("a-tous").checked = !!R.tous;
+  $("a-fou").value = R.fou || 60;
   $("a-temp").value = R.temp_min || 0;
   $("a-prixmax").value = R.prix_max || 0;
   $("a-intervalle").value = R.intervalle || 5;
   $("a-auto").checked = !!R.auto;
   $("a-maxh").value = R.max_heure || 6;
+  $("a-maxe").value = R.max_erreurs_heure || 6;
+  $("a-support").value = R.support ? "@" + R.support : "";
   $("a-exclus").value = (R.mots_exclus || []).join(", ");
   $("a-seul").checked = !!R.seulement_recherches;
   let rech = (R.recherches || []).slice();
@@ -361,7 +375,8 @@ setInterval(majTexte, 30000);
   $("a-save").onclick = () => {
     const data = {v:1, erreurs:$("a-erreurs").checked, bons_plans:$("a-bons").checked,
       temp_min:+$("a-temp").value||0, prix_max:+$("a-prixmax").value||0, intervalle:Math.max(3,+$("a-intervalle").value||5),
-      auto:$("a-auto").checked, max_heure:Math.max(1,+$("a-maxh").value||6),
+      auto:$("a-auto").checked, max_heure:Math.max(1,+$("a-maxh").value||6), max_erreurs_heure:Math.max(1,+$("a-maxe").value||6), support:$("a-support").value.trim(),
+      tous:$("a-tous").checked, fou:Math.min(95,Math.max(30,+$("a-fou").value||60)),
       mots_exclus:$("a-exclus").value.split(",").map(x=>x.trim()).filter(Boolean),
       recherches:rech, seulement_recherches:$("a-seul").checked};
     if (tg && tg.sendData && tg.initData !== undefined) { tg.sendData(JSON.stringify(data)); }
